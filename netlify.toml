@@ -32,16 +32,20 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    # The pages load no third-party scripts, styles, fonts or images — every
-    # asset is same-origin — so script-src can stay strict with no 'unsafe-inline'.
-    # style-src does need it: the markup carries 173 inline style="" attributes
-    # inherited from the original design.
+    # Scripts, images and data are all same-origin, so script-src stays strict
+    # with no 'unsafe-inline' (the pages carry no inline scripts or handlers).
+    # The only third party is Google Fonts: the stylesheet from
+    # fonts.googleapis.com and the font files from fonts.gstatic.com.
+    # worker-src allows blob: so the confetti library can draw off the main
+    # thread. style-src keeps 'unsafe-inline' for the page's inline <style> block and
+    # style="" attributes.
     Content-Security-Policy = """
       default-src 'self'; \
       script-src 'self'; \
-      style-src 'self' 'unsafe-inline'; \
+      worker-src 'self' blob:; \
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; \
       img-src 'self' data:; \
-      font-src 'self'; \
+      font-src 'self' https://fonts.gstatic.com; \
       connect-src 'self' https://*.supabase.co; \
       form-action 'self'; \
       base-uri 'self'; \
@@ -59,6 +63,29 @@
   for = "/*.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+# Scripts at the site root (index.js, libs.js, universities.js) keep stable
+# names too, so they revalidate on every load like the asset scripts below.
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Photos at the root and in img/ and partners/ change only when replaced.
+[[headers]]
+  for = "/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+[[headers]]
+  for = "/partners/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
 
 # JS and CSS filenames are stable across rebuilds (main.js, main.css), so they
 # cannot be cached immutably — a content change would never reach a returning
