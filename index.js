@@ -120,12 +120,14 @@ function target(){return cl((scrollY-top0)/sc)*UNITS}
 var SWQ=matchMedia('(max-width:767px)'),SW=false;
 function swMode(){var on=SWQ.matches;if(on===SW)return;SW=on;sec.classList.toggle('cx-sw',on);
  items.forEach(function(it){it.classList.toggle('cx-live',on);it.classList.toggle('cx-cur',on)});
- if(on){hd.style.removeProperty('--hd');hd.style.visibility='';bgs.forEach(function(b){b.style.transform='';b.classList.add('cx-full')});window.__cxCover=false;swSync()}
+ if(on){hd.style.removeProperty('--hd');hd.style.visibility='';bgs.forEach(function(b){b.style.transform='';b.classList.add('cx-full')});window.__cxCover=false;swGo(0)}
  else{st.forEach(function(o){o.g=o.r=o.nx=-1;o.live=o.cur=null});last=-2;lastHd=lastBar=-1;bgs.forEach(function(b){b.classList.remove('cx-full')})}}
 function swSync(){var w=wrap.clientWidth||1,k=Math.round(wrap.scrollLeft/(items[1]?items[1].offsetLeft-items[0].offsetLeft:w));k=Math.max(0,Math.min(N-1,k));
  if(k!==last){last=k;btns.forEach(function(b,x){b.classList.toggle('sel',x===k)});var nb=btns[k],nv=$('#cxNav');if(nb)nv.scrollTo({left:nb.offsetLeft-nv.clientWidth/2+nb.offsetWidth/2,behavior:'smooth'})}
  var m=wrap.scrollWidth-wrap.clientWidth;bar.style.transform='scaleX('+(m>0?Math.max(.06,wrap.scrollLeft/m):1).toFixed(3)+')'}
 var swq=false;wrap.addEventListener('scroll',function(){if(!SW||swq)return;swq=true;requestAnimationFrame(function(){swq=false;swSync()})},{passive:true});
+function swGo(i){i=(i+N)%N;last=i;items.forEach(function(it,k){it.classList.toggle('cx-act',k===i)});btns.forEach(function(x,k){x.classList.toggle('sel',k===i)});bar.style.transform='scaleX('+((i+1)/N).toFixed(3)+')'}
+window.__cxGo=function(d){if(SW)swGo(last+d)};
 function paint(pos){if(SW)return;var act=-1;
  for(var i=0;i<N;i++){var s=INTRO+i,o=st[i],it=items[i];
   var g=ease(cl((pos-s)/GROW)),rv=cl((pos-s-GROW*.55)/.45),nx=i<N-1?ease(cl((pos-s-1)/GROW)):0;
@@ -151,7 +153,7 @@ addEventListener('scroll',kick,{passive:true});
 addEventListener('resize',function(){measure();kick()});
 addEventListener('load',function(){measure();kick()});
 if('ResizeObserver' in window)new ResizeObserver(function(){measure();kick()}).observe(D.body);
-function go(i){if(SW){var it=items[i];if(it)wrap.scrollTo({left:it.offsetLeft-items[0].offsetLeft,behavior:'smooth'});return}measure();scrollTo({top:top0+(INTRO+i+GROW+.08)/UNITS*sc,behavior:'smooth'})}
+function go(i){if(SW){swGo(i);return}measure();scrollTo({top:top0+(INTRO+i+GROW+.08)/UNITS*sc,behavior:'smooth'})}
 btns.forEach(function(b){b.addEventListener('click',function(){go(+b.dataset.i)})});
 swMode();if(SWQ.addEventListener)SWQ.addEventListener('change',function(){swMode();measure();kick()});
 /* tilt the city card */
@@ -311,7 +313,7 @@ function ctr(el){var r=el.getBoundingClientRect(),j=jr.getBoundingClientRect();r
 /* phones: the five steps become a swipe carousel; a step ticks off when it is on screen */
 var JSW=matchMedia('(max-width:767px)'),jio=null;
 function swOn(){jr.classList.add('jr-sw');LUT=[];svg.removeAttribute('height');jr.style.setProperty('--pc','#F3EBDD');ends.forEach(function(e){e.classList.add('jr-on')});
- if(!jio&&'IntersectionObserver' in window){jio=new IntersectionObserver(function(es){es.forEach(function(e){if(e.intersectionRatio>.55)e.target.classList.add('jr-on')})},{root:jr,threshold:[0,.6]});steps.forEach(function(s){jio.observe(s)})}else if(!jio)steps.forEach(function(s){s.classList.add('jr-on')})}
+ }
 function build(){if(JSW.matches){swOn();return}jr.classList.remove('jr-sw');var pts=[ctr($('.jr-pin',ends[0]))].concat(nodes.map(ctr)).concat([ctr($('.jr-pin',ends[1]))]);
  svg.setAttribute('viewBox','0 0 '+jr.offsetWidth+' '+jr.offsetHeight);svg.setAttribute('width',jr.offsetWidth);svg.setAttribute('height',jr.offsetHeight);
  var d='M'+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1);
@@ -1337,35 +1339,77 @@ if(coarse){var SW=[[/Hover a number to open it up\./,'Tap a number to open it up
 var pw=$('#pw');if(pw){var vp=$('.hz-vp',pw);if(vp){var h=D.createElement('div');h.className='hz-sw-hint';h.innerHTML='<span>Swipe through the stages</span><i>→</i>';vp.parentNode.insertBefore(h,vp.nextSibling)}}
 })();
 
-/* ---- phone pages: long stacks become swipe rows with dots (Tutee Singapore style) ---- */
+/* ---- phone pages (v3): every topic gets its own touch interaction instead of one more sideways scroll ----
+   hero poster card · postcard deck · city switcher · services accordion · route stepper · pathway timeline ·
+   flip ticket · logo wall · sticky-note deck · news list · FAQ accordion */
 (function(){
 var PH=matchMedia('(max-width:767px)');
-/* touch screens: a finger never triggers hover effects (tilts, spotlights, hover-to-open, cursor-following layers),
-   so scrolling over the page can't set things moving underneath it. Taps (click) still work everywhere. */
+/* touch screens: a finger never triggers hover effects (tilts, spotlights, hover-to-open, cursor-following layers) */
 if(matchMedia('(hover:none)').matches){['pointerenter','pointerover','pointerleave','pointerout','pointermove'].forEach(function(t){
  addEventListener(t,function(e){if(e.pointerType!=='mouse')e.stopImmediatePropagation()},true)})}
-function dots(row,items,host){if(!row||!items.length)return;var d=D.createElement('div');d.className='sw-dots';d.setAttribute('aria-hidden','true');
- d.innerHTML=items.map(function(){return '<i></i>'}).join('');(host||row).parentNode.insertBefore(d,(host||row).nextSibling);var ds=$$('i',d),q=false;
- function sync(){q=false;var x=row.scrollLeft+row.clientWidth*.35,k=0;items.forEach(function(it,i){if(it.offsetLeft-items[0].offsetLeft<=x)k=i});
-  if(row.scrollLeft+row.clientWidth>=row.scrollWidth-4)k=items.length-1;ds.forEach(function(e,i){e.classList.toggle('on',i===k)})}
- row.addEventListener('scroll',function(){if(!q){q=true;requestAnimationFrame(sync)}},{passive:true});sync();return d}
-function rowify(row,itemSel,host){if(!row||row._sw)return;var items=itemSel?$$(itemSel,row):[].slice.call(row.children);if(items.length<2)return;row._sw=1;row.classList.add('sw-row');dots(row,items,host)}
+/* a horizontal swipe on an element: cb(+1) for left, cb(-1) for right; vertical scrolling is left alone */
+function swipe(el,cb){var x0=0,y0=0,t0=0;el.addEventListener('touchstart',function(e){var t=e.touches[0];x0=t.clientX;y0=t.clientY;t0=Date.now()},{passive:true});
+ el.addEventListener('touchend',function(e){var t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.3&&Date.now()-t0<700){el._swiped=Date.now();cb(dx<0?1:-1)}},{passive:true})}
+function swiped(el){return el._swiped&&Date.now()-el._swiped<400}
+function mk(tag,cls,html){var e=D.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+var done={};
 function setup(){if(!PH.matches)return;
- /* services: one swipe row through all three stages (a stage card before each group) */
- var board=$('#sbBoard');if(board&&!board._sw){board._sw=1;var cols=$$('.sb-col',board);if(cols.length){var tr=D.createElement('div');tr.className='sb-track';board.insertBefore(tr,cols[0]);cols.forEach(function(c){tr.appendChild(c)});dots(tr,$$('.sb-ch,.sb-card',tr))}}
- /* intake: tabs above, then swipe between the boarding pass and the departures board */
- var itk=$('#itk');if(itk&&!itk._sw){itk._sw=1;var seg=$('.dp-seg',itk),grid=$('.dp-grid',itk);if(seg&&grid){grid.parentNode.insertBefore(seg,grid);rowify(grid)}}
- /* loan partner tiles: two-row swipe strip */
- var lg=$('#loS');if(lg&&!lg._sw){lg._sw=1;var ts=$$('.lo-t',lg);if(ts.length>2){var lr=D.createElement('div');lr.className='lo-row';ts[0].parentNode.insertBefore(lr,ts[0]);ts.forEach(function(t){lr.appendChild(t)})}}
- /* contact cards under the chat */
- rowify($('#book .contact'));
- /* FAQ: the chosen question slides into view in its row */
- var ql=$('#qxList');if(ql&&!ql._sw){ql._sw=1;ql.addEventListener('click',function(e){var b=e.target.closest('.qx-q');if(!b||!PH.matches)return;ql.scrollTo({left:Math.max(0,b.offsetLeft-16),behavior:'smooth'})})}
- /* stories, news */
- rowify($('#tbl'),'.note');
- var ng=$('#nwGrid');if(ng&&!ng._sw){var mo=new MutationObserver(function(){var cs=$$('.nw-c',ng);if(cs.length>1){mo.disconnect();rowify(ng,'.nw-c')}});mo.observe(ng,{childList:true});if($$('.nw-c',ng).length>1){mo.disconnect();rowify(ng,'.nw-c')}}
- /* route carousel gets dots too */
- var jr=$('#jr');if(jr&&jr.classList.contains('jr-sw')&&!jr._sd){jr._sd=1;dots(jr,$$('.jr-st',jr))}
+
+ /* 1. hero: the photo is a poster card; the numbers sit on it as a glass strip; swipe it to change the place */
+ if(!done.hero){var st=$('#hxStage'),stats=$('.hx-copy .stats'),th=$('#hxTh');if(st){done.hero=1;
+  if(stats){stats.classList.add('hx-glass');st.appendChild(stats)}
+  swipe(st,function(d){var bs=$$('#hxTh button'),k=bs.findIndex(function(b){return b.classList.contains('on')});if(bs.length)bs[(k+d+bs.length)%bs.length].click()})}}
+
+ /* 2. destinations: a deck of postcards; tap or swipe the top card to deal the next one */
+ var reel=$('#reel');if(reel&&!reel._deck){reel._deck=1;var pcs=$$('.pc',reel),n=pcs.length,top=0;reel.classList.add('deck');
+  var cnt=mk('div','deck-ui','<span class="mono"><b>01</b> / '+String(n).padStart(2,'0')+'</span><button type="button" class="deck-nx" aria-label="Next postcard">Next card <i>→</i></button>');reel.parentNode.insertBefore(cnt,reel.nextSibling);
+  function lay(){pcs.forEach(function(c,i){var p=(i-top+n)%n;c.style.setProperty('--p',p);c.classList.toggle('deck-top',p===0);c.setAttribute('aria-hidden',p!==0)});$('b',cnt).textContent=String(top+1).padStart(2,'0')}
+  function deal(d){var c=pcs[top];if(d>0){c.classList.add('deck-out');setTimeout(function(){c.classList.remove('deck-out');top=(top+1)%n;lay()},320)}else{top=(top-1+n)%n;lay()}}
+  reel.addEventListener('click',function(e){if(e.target.closest('a')||swiped(reel))return;deal(1)});swipe(reel,deal);$('.deck-nx',cnt).addEventListener('click',function(){deal(1)});lay()}
+
+ /* 3. cities: one city at a time; tabs underneath, swipe the card for the next city */
+ var cxi=$('#cxItems');if(cxi&&!cxi._sw){cxi._sw=1;swipe(cxi,function(d){window.__cxGo&&window.__cxGo(d)})}
+
+ /* 4. services: three stages as an accordion; a service opens its sheet */
+ var board=$('#sbBoard');if(board&&!board._acc){board._acc=1;var cols=$$('.sb-col',board);board.classList.add('sb-acc');
+  function openCol(k){cols.forEach(function(c,i){c.classList.toggle('sb-on',i===k);var h=$('.sb-ch',c);if(h)h.setAttribute('aria-expanded',i===k)})}
+  cols.forEach(function(c,i){var h=$('.sb-ch',c);if(!h)return;h.setAttribute('role','button');h.tabIndex=0;h.addEventListener('click',function(){openCol(c.classList.contains('sb-on')?-1:i)});h.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();h.click()}})});openCol(0)}
+
+ /* 5. the route: a five-step stepper */
+ var jr=$('#jr');if(jr&&jr.classList.contains('jr-sw')&&!jr._stp){jr._stp=1;var sts=$$('.jr-st',jr),cur=-1;
+  var bar=mk('div','jr-stepper','<i class="jr-prog"><b></b></i>'+sts.map(function(s,i){var w=($('h3 .o',s)||{}).textContent||('Step '+(i+1));return '<button type="button" style="--c:'+getComputedStyle(s).getPropertyValue('--c')+'"><span class="mono">0'+(i+1)+'</span><small>'+esc(w.replace('.',''))+'</small></button>'}).join(''));
+  jr.parentNode.insertBefore(bar,jr);var bs=$$('button',bar);
+  var nx=mk('button','jr-next','Next step <i>→</i>');nx.type='button';jr.parentNode.insertBefore(nx,jr.nextSibling);
+  function step(i){i=Math.max(0,Math.min(sts.length-1,i));if(i===cur)return;cur=i;sts.forEach(function(s,k){s.classList.toggle('jr-cur',k===i);s.classList.toggle('jr-on',k===i)});bs.forEach(function(b,k){b.classList.toggle('on',k===i);b.classList.toggle('past',k<i)});
+   $('.jr-prog b',bar).style.transform='scaleX('+(i/(sts.length-1)).toFixed(3)+')';nx.innerHTML=i<sts.length-1?'Next step <i>→</i>':'Start again <i>↺</i>'}
+  bs.forEach(function(b,i){b.addEventListener('click',function(){step(i)})});nx.addEventListener('click',function(){step(cur<sts.length-1?cur+1:0)});swipe(jr,function(d){step(cur+d)});
+  if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){if(es[0].isIntersecting){step(0);io.disconnect()}},{threshold:.4});io.observe(jr)}else step(0)}
+
+ /* 6. pathway: a vertical timeline; tap a stage to open it (stages are rebuilt when the route changes) */
+ var pw=$('#pw');if(pw&&!pw._tl){pw._tl=1;pw.classList.add('pw-tl');pw.addEventListener('click',function(e){var c=e.target.closest('.hz-card');if(!c||e.target.closest('a'))return;var was=c.classList.contains('open');$$('.hz-card.open',pw).forEach(function(x){x.classList.remove('open')});if(!was)c.classList.add('open')});
+  var tr=$('#hzT');function first(){var c=$('.hz-s .hz-card',pw);if(c&&!$('.hz-card.open',pw))c.classList.add('open')}first();if(tr)new MutationObserver(first).observe(tr,{childList:true})}
+
+ /* 7. intake: the boarding pass flips over to the departures board */
+ var itk=$('#itk');if(itk&&!itk._flip){itk._flip=1;var seg=$('.dp-seg',itk),grid=$('.dp-grid',itk);if(seg&&grid){grid.parentNode.insertBefore(seg,grid);grid.classList.add('dp-flip');
+  var fb=mk('button','dp-fbtn','<i>↻</i><span>Departures board</span>');fb.type='button';grid.parentNode.insertBefore(fb,grid.nextSibling);
+  fb.addEventListener('click',function(){var on=grid.classList.toggle('flipped');$('span',fb).textContent=on?'Boarding pass':'Departures board'});swipe(grid,function(){fb.click()})}}
+
+ /* 8. loan partners: a logo wall */
+ var lg=$('#loS');if(lg&&!lg._sw){lg._sw=1;var ts=$$('.lo-t',lg);if(ts.length>2){var lr=mk('div','lo-row');ts[0].parentNode.insertBefore(lr,ts[0]);ts.forEach(function(t){lr.appendChild(t)})}}
+
+ /* 9. stories: a stack of sticky notes; tap or swipe to pass the top note to the back */
+ var tbl=$('#tbl');if(tbl&&!tbl._deck){tbl._deck=1;var ns=$$('.note',tbl),nn=ns.length,tp=0;tbl.classList.add('notes-deck');
+  var sc=mk('div','deck-ui','<span class="mono"><b>01</b> / '+String(nn).padStart(2,'0')+'</span><button type="button" class="deck-nx">Next story <i>→</i></button>');tbl.parentNode.insertBefore(sc,tbl.nextSibling);
+  function lay2(){ns.forEach(function(c,i){var p=(i-tp+nn)%nn;c.style.setProperty('--p',p);c.style.zIndex=50-p;c.classList.toggle('deck-top',p===0)});$('b',sc).textContent=String(tp+1).padStart(2,'0')}
+  function nxt(d){var c=ns[tp];if(d>0){c.classList.add('deck-out');setTimeout(function(){c.classList.remove('deck-out');tp=(tp+1)%nn;lay2()},320)}else{tp=(tp-1+nn)%nn;lay2()}}
+  tbl.addEventListener('click',function(){if(!swiped(tbl))nxt(1)});swipe(tbl,nxt);$('.deck-nx',sc).addEventListener('click',function(){nxt(1)});lay2()}
+
+ /* 10. FAQ: an accordion; the answer opens right under its question */
+ var ql=$('#qxList'),qp=$('#qxPanel');if(ql&&qp&&!ql._acc){ql._acc=1;var shut=true,typed=false;
+  function place(){var bs=$$('.qx-q',ql),k=bs.findIndex(function(b){return b.classList.contains('on')});qp.style.order=k<0?999:k*2+1;qp.classList.toggle('qx-shut',shut||k<0);var g=qp.parentNode;if(g)g.classList.toggle('qx-closed',shut||k<0)}
+  ql.addEventListener('click',function(e){var b=e.target.closest('.qx-q');if(!b)return;var wasOn=b.classList.contains('on')&&!shut;setTimeout(function(){shut=wasOn;place()},0)},true);
+  var qin=$('#qxIn');if(qin)qin.addEventListener('input',function(){typed=true});
+  new MutationObserver(function(m){if(typed)shut=false;place()}).observe(ql,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});place()}
 }
 setup();if(PH.addEventListener)PH.addEventListener('change',function(){if(PH.matches)setup()});
 addEventListener('load',function(){setTimeout(setup,300)});
