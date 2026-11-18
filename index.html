@@ -354,6 +354,210 @@
  .hx-copy .lede{-webkit-line-clamp:2}
  .hx-th button span{font-size:12.5px}
 }
+/* ===== phone "pages" (v2): each topic is one screen, touch never drives hover effects, iOS fixes ===== */
+@media (max-width:767px){
+ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+ /* every topic is a page: at least one screen tall, content centred between the top bar and the action bar */
+ main>section.band,main>section.places,main>section.route,main>section.news,main>section.stories{min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding-top:calc(70px + env(safe-area-inset-top,0px))!important;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))!important}
+ main>section.band,main>section.places,main>section.route,main>section.news,main>section.stories{align-items:stretch!important}
+ main>section.band>*,main>section.places>*,main>section.route>*,main>section.news>*,main>section.stories>*{min-width:0;max-width:100%;width:100%;box-sizing:border-box}
+ .jr.jr-sw{margin:0!important}
+ .cx-sw .cx-pin{min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding:calc(70px + env(safe-area-inset-top,0px)) 0 calc(80px + env(safe-area-inset-bottom,0px))!important}
+ main>section.cv{content-visibility:visible!important;contain-intrinsic-size:none!important}
+ .h2,.why .h2{font-size:clamp(28px,8.4vw,36px)!important;margin-top:8px}
+ .lede{font-size:14px!important;line-height:1.45!important;margin-top:8px!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .mqb{padding-block:4px}.mqb .t{font-size:36px!important}
+ .mqb{transform:none!important}
+ .pc .fr{transform:none!important;transition:none!important}
+
+ /* hero: the shade runs the full height (it used to stop part way, leaving a seam in the photo) */
+ .hx-shade{top:0!important;bottom:0!important;height:auto!important}
+ .hx-copy .lede{-webkit-line-clamp:3}
+
+ /* postcards */
+ .pc .fr{height:clamp(250px,calc(100svh - 380px),420px)!important}
+
+ /* why: open fact on top, the other three in one row (rows no longer stretch when a fact opens) */
+ .bx{grid-template-rows:none!important;grid-auto-rows:auto!important;align-items:stretch}
+ .bx-t:not(.bx-on){height:auto!important;min-height:84px!important}
+ .bx-t.bx-on .bx-num{font-size:56px!important;margin-top:6px!important}
+ .bx-t.bx-on .bx-lb{font-size:17px!important;margin-top:6px!important}
+ .bx-on .bx-more{max-height:none!important;margin-top:8px!important;gap:10px!important}
+ .bx-t.bx-on .bx-more p{font-size:13px!important}
+ .bx-vis .v-hrs{height:70px!important}
+ .bx-vis .v-map svg{height:96px!important}
+ .bx-vis .v-unis{gap:3px!important}
+ .bx-vis .v-psw .trk{height:36px!important}
+
+ /* cities */
+ .cx-sw .cx-it{flex-basis:calc(100% - 32px)}
+ .cx-sw .cx-l h3{font-size:clamp(34px,10vw,44px)!important}
+
+ /* city match: vibe tiles + your top match; the full ranking stays on larger screens */
+ .cm{margin-top:12px!important;gap:12px!important}
+ .cm-tl{height:56px!important;padding:7px 9px!important}
+ .cm-tl .cm-ic{display:none}
+ .cm-tl .cm-nm{font-size:12px!important}
+ #cmList,.cm-r>.cm-k{display:none!important}
+ .cm-hero{margin-top:0!important}
+ .cm-hc{padding:14px!important}
+ .cm-hrow{margin-top:6px!important}
+ .cm-hrow h3{font-size:clamp(30px,9vw,38px)!important}
+ .cm-hc p{-webkit-line-clamp:2!important;font-size:13px!important}
+ .cm-st{font-size:11px!important}
+
+ /* services: one swipe row, a stage card before each group; details open as a sheet */
+ .sb-track{display:flex;gap:10px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;margin:0 -16px;padding:4px 16px 6px;scroll-padding-inline:16px}
+ .sb-track::-webkit-scrollbar{display:none}
+ .sb-track .sb-col,.sb-track .sb-cards{display:contents!important}
+ .sb-track .sb-ch{flex:0 0 132px;scroll-snap-align:start;display:flex;flex-direction:column;justify-content:flex-end;gap:4px;padding:14px!important;border-radius:20px;background:color-mix(in srgb,var(--pc) 14%,rgba(13,11,30,.7));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pc) 40%,transparent)}
+ .sb-track .sb-ch h3{font-size:18px!important;line-height:1.1}
+ .sb-track .sb-line{display:none}
+ .sb-track .sb-card{flex:0 0 min(76vw,300px);width:auto!important;scroll-snap-align:start}
+ .sb-board{display:block!important}
+ .sb-panel{position:fixed!important;left:8px!important;right:8px!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;width:auto!important;height:auto!important;max-height:84svh;overflow-y:auto!important;overscroll-behavior:contain;z-index:95!important;border-radius:24px!important}
+
+ /* the route */
+ .jr-sw .jr-tx h3{font-size:clamp(40px,12vw,52px)!important}
+ .jr-sw .jr-tx p{font-size:13.5px!important}
+ .jr.jr-sw{padding-bottom:8px!important}
+
+ /* pathway */
+ .hz-swipe .hz-vp{height:auto!important}
+ .hz-swipe .hz-track{height:auto!important;align-items:stretch}
+ .hz-hud{gap:8px!important}
+
+ /* intake: tabs on top, then swipe between the boarding pass and the departures board */
+ .dpx .dp-seg{margin-bottom:10px}
+ .dp-grid.sw-row{gap:12px!important;align-items:start}
+ .dp-grid.sw-row>*{flex:0 0 calc(100% - 8px)!important;min-width:0}
+ .dp-pass{padding:16px 14px 0!important;--stub:84px}
+ .dp-route b{font-size:34px!important}
+ .dp-f{gap:8px!important;margin-top:8px!important}
+ .dp-f dd{font-size:13px!important}
+ .dp-stub{padding-block:8px!important}
+ .dp-slot{margin-top:6px!important}
+ .dp-cta{margin-top:12px!important}
+ .dp-board{padding:12px!important}
+ .dp-cd{padding-block:6px!important}
+ .dp-r{padding-block:6px!important}
+ .dp-tick{display:none!important}
+
+ /* universities: the ranked list and the explorer; the map stays on larger screens */
+ .um-map,.um-hint,.um-lh{display:none!important}
+ .um-head{margin-bottom:6px!important}
+ .um-r button{padding-block:6px!important;min-height:0!important}
+ .um-list ol{gap:4px!important}
+ .loans{min-height:calc(100svh - 160px);display:flex;flex-direction:column;justify-content:center;margin-top:40px!important}
+
+ /* FAQ: questions as one swipe row, the answer underneath */
+ .qx-list{display:flex!important;flex-wrap:nowrap!important;flex-direction:row!important;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scrollbar-width:none;gap:8px!important;margin:0 -16px;padding:2px 16px 4px!important;max-height:none!important}
+ .qx-list::-webkit-scrollbar{display:none}
+ .qx-q{flex:0 0 auto;width:min(64vw,240px);scroll-snap-align:start;align-items:flex-start!important;padding:10px 12px!important}
+ .qx-q i{display:none}
+ .qx-q b{font-size:13px!important;line-height:1.3}
+ .qx-none{flex:0 0 100%}
+ .qx-panel{max-height:none}
+ #qxQ{font-size:18px!important}
+ .qx-a{font-size:13.5px!important}
+ .qx-foot span{display:none}
+
+ /* book a call: the grid can never be wider than the screen; request summary wraps; the chat fills what's left */
+ .book .in.chx{grid-template-columns:minmax(0,1fr)!important}
+ .chx>*{min-width:0;max-width:100%}
+ #chSum{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible!important}
+ #chSum>div{min-width:0}
+ #chSum dd{max-width:none!important}
+ .book .phone{width:100%!important;max-width:100%!important;height:clamp(320px,calc(100svh - 380px),460px)!important;min-height:0!important}
+ .book .phone .msg{max-width:84%}
+ .book .phone .ph-in input{min-width:0}
+
+ /* round 3 fits */
+ .bx-t.bx-on .bx-more p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+ .bx-vis{max-height:64px;overflow:hidden}
+ .bx-vis .v-cap{display:none}
+ #match .lede,.cm-lh,.cm-st{display:none!important}
+ .cm-tl{height:46px!important}
+ .phases{display:none!important}
+ .jr-sw .jr-st{padding:14px!important}
+ .jr-sw .jr-tx h3{font-size:clamp(36px,11vw,46px)!important;margin:4px 0 6px!important}
+ .jr-sw .jr-ck{margin-top:10px!important}
+ .jr-sw .jr-ck li{padding:6px 10px!important}
+ .hz-swipe .hz-path{display:none!important}
+ .hz-swipe .hz-vp{margin-top:12px!important}
+ .hz-swipe .hz-p{height:auto!important}
+ .hz-swipe .hz-card{padding:16px!important}
+ .hz-ghost{display:none!important}
+ #intake .lede,.dp-cta{display:none!important}
+ .dp-pass{--stub:72px}
+ .dp-stub .dp-bar{height:34px!important}
+ .dp-clk,.dp-prog{display:none!important}
+ .dp-bh{padding-bottom:6px!important;margin-bottom:6px!important}
+ .dp-cd{padding-block:4px!important;gap:8px!important}
+ .dp-rows{gap:0!important}
+ .dp-r{padding-block:3px!important;row-gap:2px!important}
+ .qs-stat b,.qs-stat strong{font-size:44px!important}
+ .um-head{gap:12px!important}
+ .um-r button{padding-block:3px!important}
+ .um-r button small{display:none!important}
+ .qx-a{max-height:9.6em;overflow-y:auto;overscroll-behavior:contain;-webkit-mask:linear-gradient(#000 80%,transparent);mask:linear-gradient(#000 80%,transparent);padding-bottom:10px}
+ .qx-foot{display:none!important}
+ .qx{grid-template-columns:minmax(0,1fr)!important}
+ .qx-grid{display:flex!important;flex-direction:column}
+ .qx-grid>*{min-width:0;max-width:100%}
+ .qx-list{order:-1}
+ .hz-swipe .hz-card ul{display:none!important}
+ .dp-grid.sw-row{align-items:flex-start!important}
+ .dp-board{max-height:min(400px,calc(100svh - 300px));overflow-y:auto;overscroll-behavior:contain}
+ .qx-chips{display:none!important}
+ .um-body{display:block!important;grid-template-columns:minmax(0,1fr)!important}
+ .um-list,.um-list ol,.um-r,.um-r button{min-width:0!important;max-width:100%!important}
+ .um-r button{width:100%}
+ .um-list{overflow:hidden}
+ main>section{overflow-x:clip}
+ .glow,#glow{display:none!important}
+ .bg2{overflow:hidden}
+ body:has(.sb-board.sb-open) .mbar{transform:translateY(115%)!important}
+ .qx-panel{min-height:0!important;height:auto!important}
+ .hz-swipe .hz-card h3{font-size:24px!important}
+ .hz-swipe .hz-card p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .book .contact,.book .contact+.sw-dots{display:none!important}
+ .ch-sum{display:flex!important;align-items:center;gap:10px;padding:8px 10px!important}
+ .ch-sum-h{flex:none;flex-direction:column;align-items:flex-start!important;gap:2px;border:0!important;padding:0!important}
+ .ch-sum-h span{font-size:9.5px!important}
+ #chSum{margin:0!important;flex:1;min-width:0}
+ #chSum>div{min-width:64px;padding:5px 8px!important}
+ .book .phone{height:clamp(300px,calc(100svh - 330px),480px)!important}
+
+ /* round 2 fits */
+ .cx-sw .cx-r .u,.cx-sw .cx-r .cx-lab:nth-of-type(2){display:none!important}
+ .cx-sw .cx-sq{width:min(36vw,150px)!important}
+ .cm-lh{margin:0!important}
+ .cm-pre{margin-top:6px!important}
+ .cm-tl{height:50px!important}
+ .cm-tiles{margin-top:8px!important}
+ .cm-hc p{-webkit-line-clamp:1!important}
+ .cm-go{height:36px!important;margin-top:8px!important;font-size:13px!important}
+ .hz-swipe .hz-intro{display:none!important}
+ .qx-tags{display:none!important}
+ .qx-panel{padding:14px!important}
+ .qx-search{height:46px!important}
+ .um-r button{padding:5px 12px!important;gap:10px!important}
+ .um-r button *{font-size:13.5px}
+ .um-r button small,.um-r button span small{font-size:10.5px!important}
+ .ubar{margin-top:12px!important}
+ .ubar p{display:none}
+ #chSum{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;gap:6px!important}
+ #chSum>div{flex:0 0 auto;min-width:72px}
+ #chSum dd{max-width:42vw!important}
+ .ch-sum{padding:10px 12px!important}
+ .chx>.sw-dots{order:7}
+ .book .phone{height:clamp(290px,calc(100svh - 372px),460px)!important}
+}
+@media (hover:none){.glow,#glow{display:none!important}}
+@media (max-width:767px){
+}
+/* touch screens never fire hover effects (tilts, spotlights, hover-to-open) from a finger */
 /* ===== desktop + tablet: alignment only (no layout changes) ===== */
 @media (min-width:1024px){
  /* every section shares the same left and right edge as the hero, intake, universities and booking */

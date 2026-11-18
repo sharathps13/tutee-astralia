@@ -498,7 +498,10 @@ rows.forEach(function(r,k){if(k>3)return;$('.dp-ck',r).addEventListener('click',
 function indicator(anim){var b=tabs[isel],ind=$('.dp-ind',box);var x=b.offsetLeft,w=b.offsetWidth;if(G&&!RM&&anim)G.to(ind,{x:x,width:w,duration:.55,ease:'expo.out'});else{ind.style.transform='translateX('+x+'px)';ind.style.width=w+'px'}}
 function render(first){var t=INT[isel];box.style.setProperty('--ic',COLS[isel]);tabs.forEach(function(b,i){b.setAttribute('aria-selected',i===isel);b.classList.toggle('on',i===isel)});var fi=$('#fIntake');if(fi)fi.selectedIndex=isel;indicator(!first);
  function fill(){meta();stamps(null);route(false)}
- if(G&&!RM&&!first){var tl=G.timeline();tl.to(pw,{yPercent:-104,clipPath:'inset(0% 0 104% 0)',duration:.42,ease:'power2.in',onComplete:fill}).fromTo(pw,{yPercent:-104,clipPath:'inset(104% 0 0% 0)'},{yPercent:0,clipPath:'inset(0% 0 0% 0)',duration:1.1,ease:'power2.out',clearProps:'clipPath'});route(false)}
+ var PHN=matchMedia('(max-width:767px)').matches;
+  /* phones: a plain slide-and-fade print (the clip-path version can leave the pass half-painted in iOS Safari) */
+  if(G&&!RM&&PHN){G.killTweensOf(pw);G.set(pw,{clearProps:'clipPath'});if(!first){G.to(pw,{y:-24,opacity:0,duration:.25,ease:'power2.in',onComplete:function(){fill();G.fromTo(pw,{y:-36,opacity:0},{y:0,opacity:1,duration:.6,ease:'power3.out',clearProps:'transform,opacity'})}});route(false)}else{fill();G.fromTo(pw,{y:-36,opacity:0},{y:0,opacity:1,duration:.7,ease:'power3.out',delay:.15,clearProps:'transform,opacity'})}}
+  else if(G&&!RM&&!first){var tl=G.timeline();tl.to(pw,{yPercent:-104,clipPath:'inset(0% 0 104% 0)',duration:.42,ease:'power2.in',onComplete:fill}).fromTo(pw,{yPercent:-104,clipPath:'inset(104% 0 0% 0)'},{yPercent:0,clipPath:'inset(0% 0 0% 0)',duration:1.1,ease:'power2.out',clearProps:'clipPath'});route(false)}
  else{fill();if(G&&!RM)G.fromTo(pw,{yPercent:-104,clipPath:'inset(104% 0 0% 0)'},{yPercent:0,clipPath:'inset(0% 0 0% 0)',duration:1.3,ease:'power2.out',delay:.2,clearProps:'clipPath'})}
  R.forEach(function(_,k){paintRow(k,(first?300:0)+k*110,true)});counts(first)}
 tabs.forEach(function(b,i){b.addEventListener('click',function(){if(i===isel&&shown)return;isel=i;shown=true;render(false)})});
@@ -674,7 +677,7 @@ tick();setInterval(tick,30000);
  if(!RM&&!window.__noGov)setTimeout(function(){requestAnimationFrame(gov)},2500);
  /* content-visibility: sections far from the viewport skip style, layout and paint. Pinned sections, and any with
     fixed-position content, are left alone; each keeps its measured height so scroll positions never move. */
- function cv(){if(!('contentVisibility' in h.style))return;var pins=(window.ScrollTrigger?ScrollTrigger.getAll():[]).map(function(s){return s.pin}).filter(Boolean);
+ function cv(){if(!('contentVisibility' in h.style)||matchMedia('(max-width:767px)').matches)return;var pins=(window.ScrollTrigger?ScrollTrigger.getAll():[]).map(function(s){return s.pin}).filter(Boolean);
   $$('main > section').forEach(function(sec){if(sec.id==='top'||pins.some(function(p){return sec.contains(p)}))return;
    var fixed=false,all=sec.getElementsByTagName('*');for(var i=0;i<all.length&&!fixed;i++){var p=getComputedStyle(all[i]).position;if(p==='fixed')fixed=true}if(fixed)return;
    sec.style.containIntrinsicSize='auto '+sec.offsetHeight+'px';sec.style.contentVisibility='auto';sec.classList.add('cv')})}
@@ -1334,9 +1337,13 @@ if(coarse){var SW=[[/Hover a number to open it up\./,'Tap a number to open it up
 var pw=$('#pw');if(pw){var vp=$('.hz-vp',pw);if(vp){var h=D.createElement('div');h.className='hz-sw-hint';h.innerHTML='<span>Swipe through the stages</span><i>→</i>';vp.parentNode.insertBefore(h,vp.nextSibling)}}
 })();
 
-/* ---- compact phone layer: long stacks become swipe rows with dots (Tutee Singapore style) ---- */
+/* ---- phone pages: long stacks become swipe rows with dots (Tutee Singapore style) ---- */
 (function(){
 var PH=matchMedia('(max-width:767px)');
+/* touch screens: a finger never triggers hover effects (tilts, spotlights, hover-to-open, cursor-following layers),
+   so scrolling over the page can't set things moving underneath it. Taps (click) still work everywhere. */
+if(matchMedia('(hover:none)').matches){['pointerenter','pointerover','pointerleave','pointerout','pointermove'].forEach(function(t){
+ addEventListener(t,function(e){if(e.pointerType!=='mouse')e.stopImmediatePropagation()},true)})}
 function dots(row,items,host){if(!row||!items.length)return;var d=D.createElement('div');d.className='sw-dots';d.setAttribute('aria-hidden','true');
  d.innerHTML=items.map(function(){return '<i></i>'}).join('');(host||row).parentNode.insertBefore(d,(host||row).nextSibling);var ds=$$('i',d),q=false;
  function sync(){q=false;var x=row.scrollLeft+row.clientWidth*.35,k=0;items.forEach(function(it,i){if(it.offsetLeft-items[0].offsetLeft<=x)k=i});
@@ -1344,18 +1351,20 @@ function dots(row,items,host){if(!row||!items.length)return;var d=D.createElemen
  row.addEventListener('scroll',function(){if(!q){q=true;requestAnimationFrame(sync)}},{passive:true});sync();return d}
 function rowify(row,itemSel,host){if(!row||row._sw)return;var items=itemSel?$$(itemSel,row):[].slice.call(row.children);if(items.length<2)return;row._sw=1;row.classList.add('sw-row');dots(row,items,host)}
 function setup(){if(!PH.matches)return;
- /* services: wrap each stage's cards in a swipe row */
- $$('.sb-col').forEach(function(col){if(col._sw)return;col._sw=1;var cs=$$('.sb-card',col);if(cs.length<2)return;var w=D.createElement('div');w.className='sb-cards';cs[0].parentNode.insertBefore(w,cs[0]);cs.forEach(function(c){w.appendChild(c)});rowify(w)});
+ /* services: one swipe row through all three stages (a stage card before each group) */
+ var board=$('#sbBoard');if(board&&!board._sw){board._sw=1;var cols=$$('.sb-col',board);if(cols.length){var tr=D.createElement('div');tr.className='sb-track';board.insertBefore(tr,cols[0]);cols.forEach(function(c){tr.appendChild(c)});dots(tr,$$('.sb-ch,.sb-card',tr))}}
+ /* intake: tabs above, then swipe between the boarding pass and the departures board */
+ var itk=$('#itk');if(itk&&!itk._sw){itk._sw=1;var seg=$('.dp-seg',itk),grid=$('.dp-grid',itk);if(seg&&grid){grid.parentNode.insertBefore(seg,grid);rowify(grid)}}
  /* loan partner tiles: two-row swipe strip */
  var lg=$('#loS');if(lg&&!lg._sw){lg._sw=1;var ts=$$('.lo-t',lg);if(ts.length>2){var lr=D.createElement('div');lr.className='lo-row';ts[0].parentNode.insertBefore(lr,ts[0]);ts.forEach(function(t){lr.appendChild(t)})}}
  /* contact cards under the chat */
  rowify($('#book .contact'));
- /* FAQ: bring the answer into view after a tap */
- var ql=$('#qxList');if(ql&&!ql._sw){ql._sw=1;ql.addEventListener('click',function(e){if(!PH.matches||!e.target.closest('.qx-q'))return;var p=$('#qxPanel');if(p&&p.getBoundingClientRect().top<70)p.scrollIntoView({behavior:'smooth',block:'start'})})}
+ /* FAQ: the chosen question slides into view in its row */
+ var ql=$('#qxList');if(ql&&!ql._sw){ql._sw=1;ql.addEventListener('click',function(e){var b=e.target.closest('.qx-q');if(!b||!PH.matches)return;ql.scrollTo({left:Math.max(0,b.offsetLeft-16),behavior:'smooth'})})}
  /* stories, news */
  rowify($('#tbl'),'.note');
  var ng=$('#nwGrid');if(ng&&!ng._sw){var mo=new MutationObserver(function(){var cs=$$('.nw-c',ng);if(cs.length>1){mo.disconnect();rowify(ng,'.nw-c')}});mo.observe(ng,{childList:true});if($$('.nw-c',ng).length>1){mo.disconnect();rowify(ng,'.nw-c')}}
- /* route + cities carousels get dots too */
+ /* route carousel gets dots too */
  var jr=$('#jr');if(jr&&jr.classList.contains('jr-sw')&&!jr._sd){jr._sd=1;dots(jr,$$('.jr-st',jr))}
 }
 setup();if(PH.addEventListener)PH.addEventListener('change',function(){if(PH.matches)setup()});
