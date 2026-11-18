@@ -1,4 +1,4 @@
-(function(){'use strict';var IM=function(s){return (innerWidth<900||matchMedia('(pointer:coarse)').matches)?s.replace(/\.webp$/,'-m.webp'):s};
+(function(){'use strict';var IM=function(s){return (innerWidth>=768&&(innerWidth<900||matchMedia('(pointer:coarse)').matches))?s.replace(/\.webp$/,'-m.webp'):s};
 var D=document,$=function(s,r){return (r||D).querySelector(s)},$$=function(s,r){return Array.prototype.slice.call((r||D).querySelectorAll(s))};
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 var RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1351,24 +1351,45 @@ if(matchMedia('(hover:none)').matches){['pointerenter','pointerover','pointerlea
 function swipe(el,cb){var x0=0,y0=0,t0=0;el.addEventListener('touchstart',function(e){var t=e.touches[0];x0=t.clientX;y0=t.clientY;t0=Date.now()},{passive:true});
  el.addEventListener('touchend',function(e){var t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)>44&&Math.abs(dx)>Math.abs(dy)*1.3&&Date.now()-t0<700){el._swiped=Date.now();cb(dx<0?1:-1)}},{passive:true})}
 function swiped(el){return el._swiped&&Date.now()-el._swiped<400}
+/* finger-follow drag for card stacks: the top card tracks the finger sideways and flies off past a threshold */
+function drag(el,getTop,out){var s=null;el.style.touchAction='pan-y';
+ el.addEventListener('touchstart',function(e){var c=getTop();if(!c)return;var t=e.touches[0];s={x:t.clientX,y:t.clientY,c:c,dx:0,lock:0}},{passive:true});
+ el.addEventListener('touchmove',function(e){if(!s)return;var t=e.touches[0],dx=t.clientX-s.x,dy=t.clientY-s.y;if(!s.lock){if(Math.abs(dx)<7&&Math.abs(dy)<7)return;s.lock=Math.abs(dx)>Math.abs(dy)?1:2}if(s.lock!==1)return;s.dx=dx;s.c.classList.add('dragging');s.c.style.setProperty('--dx',dx+'px');s.c.style.setProperty('--dr',(dx/18).toFixed(2)+'deg')},{passive:true});
+ function end(){if(!s)return;var c=s.c,dx=s.dx,lock=s.lock;s=null;c.classList.remove('dragging');if(lock===1)el._swiped=Date.now();if(lock===1&&Math.abs(dx)>80)out(c,dx<0?1:-1);else{c.style.removeProperty('--dx');c.style.removeProperty('--dr')}}
+ el.addEventListener('touchend',end,{passive:true});el.addEventListener('touchcancel',end,{passive:true})}
+/* a stack of cards: tap, drag or press Next; the top card flies away and goes to the back */
+function deck(box,cards,label,cls){var n=cards.length,top=0,busy=false;box.classList.add(cls);
+ var ui=mk('div','deck-ui','<span class="mono"><b>01</b> / '+String(n).padStart(2,'0')+'</span><span class="deck-dots">'+cards.map(function(){return '<i></i>'}).join('')+'</span><button type="button" class="deck-nx">'+label+' <i>→</i></button>');box.parentNode.insertBefore(ui,box.nextSibling);var dts=$$('.deck-dots i',ui);
+ function lay(){cards.forEach(function(c,i){var p=(i-top+n)%n;c.style.setProperty('--p',p);c.style.setProperty('--s',p%2?-1:1);c.style.zIndex=60-p;c.classList.toggle('deck-top',p===0);c.setAttribute('aria-hidden',p!==0)});$('b',ui).textContent=String(top+1).padStart(2,'0');dts.forEach(function(d,i){d.classList.toggle('on',i===top)})}
+ function fly(c,dir){if(busy)return;busy=true;c.classList.add('flying');c.style.setProperty('--dx',(dir>0?-1:1)*Math.max(innerWidth,400)*1.1+'px');c.style.setProperty('--dr',(dir>0?-24:24)+'deg');
+  setTimeout(function(){c.classList.remove('flying');c.classList.add('deck-reset');c.style.removeProperty('--dx');c.style.removeProperty('--dr');top=(top+1)%n;lay();requestAnimationFrame(function(){requestAnimationFrame(function(){c.classList.remove('deck-reset');busy=false})})},340)}
+ box.addEventListener('click',function(e){if(e.target.closest('a')||swiped(box))return;fly(cards[top],1)});drag(box,function(){return cards[top]},fly);$('.deck-nx',ui).addEventListener('click',function(){fly(cards[top],1)});lay()}
 function mk(tag,cls,html){var e=D.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
 var done={};
 function setup(){if(!PH.matches)return;
 
- /* 1. hero: the photo is a poster card; the numbers sit on it as a glass strip; swipe it to change the place */
- if(!done.hero){var st=$('#hxStage'),stats=$('.hx-copy .stats'),th=$('#hxTh');if(st){done.hero=1;
-  if(stats){stats.classList.add('hx-glass');st.appendChild(stats)}
-  swipe(st,function(d){var bs=$$('#hxTh button'),k=bs.findIndex(function(b){return b.classList.contains('on')});if(bs.length)bs[(k+d+bs.length)%bs.length].click()})}}
+ /* 1. hero: a full-screen story. Stories-style bars on top, tap right/left for the next/previous place,
+    a live place chip, the place name rising letter by letter, glowing call to action, a ticker of numbers */
+ if(!done.hero){var hero=$('#top'),th=$('#hxTh'),copy=$('#hxCopy');if(hero&&th&&copy){done.hero=1;hero.classList.add('hx-story');
+  var chip=mk('div','hx-chip','<i></i><span></span>'),chipT=$('span',chip);copy.insertBefore(chip,copy.firstChild);
+  function cur(){var bs=$$('#hxTh button');return {bs:bs,k:bs.findIndex(function(b){return b.classList.contains('on')})}}
+  function jump(d){var c=cur();if(c.bs.length)c.bs[(c.k+d+c.bs.length)%c.bs.length].click()}
+  function marks(){var c=cur();c.bs.forEach(function(b,i){b.classList.toggle('past',i<c.k)});var b=c.bs[c.k];if(b){var sp=$('span',b),sm=sp&&$('small',sp),t=sp?sp.textContent:'';if(sm)t=sm.textContent+' · '+t.slice(sm.textContent.length);if(chipT.textContent!==t){chipT.textContent=t;chip.classList.remove('pop');void chip.offsetWidth;chip.classList.add('pop')}}}
+  new MutationObserver(marks).observe(th,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});marks();
+  hero.addEventListener('click',function(e){if(e.target.closest('a,button,.lede,h1,.stats')||swiped(hero))return;jump(e.clientX<innerWidth*.33?-1:1)});
+  swipe(hero,jump);
+  var stats=$('.stats',copy);if(stats&&!stats._mq){stats._mq=1;var kids=[].slice.call(stats.children),trk=mk('div','hx-mq');kids.forEach(function(k){trk.appendChild(k)});var cl=kids.map(function(k){var c=k.cloneNode(true);c.setAttribute('aria-hidden','true');trk.appendChild(c);return c});stats.appendChild(trk);stats.classList.add('hx-ticker');
+   function sync(){kids.forEach(function(k,i){cl[i].innerHTML=k.innerHTML})}setTimeout(sync,2500);setTimeout(sync,5000)}
+  var up=mk('a','hx-up','<span>Explore</span><i></i><i></i>');up.href='#places';hero.appendChild(up);
+  var rot=$('#rot');function split(b){if(b._sp)return;b._sp=1;var t=b.textContent;b.setAttribute('aria-label',t);b.innerHTML=t.split('').map(function(ch,i){return '<span aria-hidden="true" style="--i:'+i+'">'+esc(ch)+'</span>'}).join('')}
+  if(rot){$$('b',rot).forEach(split);new MutationObserver(function(ms){ms.forEach(function(m){[].forEach.call(m.addedNodes,function(nd){if(nd.tagName==='B')split(nd)})})}).observe(rot,{childList:true})}}}
 
- /* 2. destinations: a deck of postcards; tap or swipe the top card to deal the next one */
- var reel=$('#reel');if(reel&&!reel._deck){reel._deck=1;var pcs=$$('.pc',reel),n=pcs.length,top=0;reel.classList.add('deck');
-  var cnt=mk('div','deck-ui','<span class="mono"><b>01</b> / '+String(n).padStart(2,'0')+'</span><button type="button" class="deck-nx" aria-label="Next postcard">Next card <i>→</i></button>');reel.parentNode.insertBefore(cnt,reel.nextSibling);
-  function lay(){pcs.forEach(function(c,i){var p=(i-top+n)%n;c.style.setProperty('--p',p);c.classList.toggle('deck-top',p===0);c.setAttribute('aria-hidden',p!==0)});$('b',cnt).textContent=String(top+1).padStart(2,'0')}
-  function deal(d){var c=pcs[top];if(d>0){c.classList.add('deck-out');setTimeout(function(){c.classList.remove('deck-out');top=(top+1)%n;lay()},320)}else{top=(top-1+n)%n;lay()}}
-  reel.addEventListener('click',function(e){if(e.target.closest('a')||swiped(reel))return;deal(1)});swipe(reel,deal);$('.deck-nx',cnt).addEventListener('click',function(){deal(1)});lay()}
+ /* 2. destinations: a fanned deck of HD postcards; drag the top card away (or tap) */
+ var reel=$('#reel');if(reel&&!reel._deck){reel._deck=1;$$('img',reel).forEach(function(im){var m=(im.getAttribute('src')||'').match(/aus-(sydney|melbourne|apostles|reef|uluru)\.webp/);if(m){im.loading='eager';im.src='hero-'+m[1]+'.webp'}});
+  deck(reel,$$('.pc',reel),'Next card','deck');var pl=$('#places .lede');if(pl)pl.textContent='Six places a flight, a drive or a ferry away. Drag a card away to deal the next one.'}
 
  /* 3. cities: one city at a time; tabs underneath, swipe the card for the next city */
- var cxi=$('#cxItems');if(cxi&&!cxi._sw){cxi._sw=1;swipe(cxi,function(d){window.__cxGo&&window.__cxGo(d)})}
+ var cxi=$('#cxItems');if(cxi&&!cxi._sw){cxi._sw=1;drag(cxi,function(){return $('.cx-it.cx-act',cxi)},function(c,d){c.style.removeProperty('--dx');c.style.removeProperty('--dr');window.__cxGo&&window.__cxGo(d)})}
 
  /* 4. services: three stages as an accordion; a service opens its sheet */
  var board=$('#sbBoard');if(board&&!board._acc){board._acc=1;var cols=$$('.sb-col',board);board.classList.add('sb-acc');
@@ -1397,12 +1418,8 @@ function setup(){if(!PH.matches)return;
  /* 8. loan partners: a logo wall */
  var lg=$('#loS');if(lg&&!lg._sw){lg._sw=1;var ts=$$('.lo-t',lg);if(ts.length>2){var lr=mk('div','lo-row');ts[0].parentNode.insertBefore(lr,ts[0]);ts.forEach(function(t){lr.appendChild(t)})}}
 
- /* 9. stories: a stack of sticky notes; tap or swipe to pass the top note to the back */
- var tbl=$('#tbl');if(tbl&&!tbl._deck){tbl._deck=1;var ns=$$('.note',tbl),nn=ns.length,tp=0;tbl.classList.add('notes-deck');
-  var sc=mk('div','deck-ui','<span class="mono"><b>01</b> / '+String(nn).padStart(2,'0')+'</span><button type="button" class="deck-nx">Next story <i>→</i></button>');tbl.parentNode.insertBefore(sc,tbl.nextSibling);
-  function lay2(){ns.forEach(function(c,i){var p=(i-tp+nn)%nn;c.style.setProperty('--p',p);c.style.zIndex=50-p;c.classList.toggle('deck-top',p===0)});$('b',sc).textContent=String(tp+1).padStart(2,'0')}
-  function nxt(d){var c=ns[tp];if(d>0){c.classList.add('deck-out');setTimeout(function(){c.classList.remove('deck-out');tp=(tp+1)%nn;lay2()},320)}else{tp=(tp-1+nn)%nn;lay2()}}
-  tbl.addEventListener('click',function(){if(!swiped(tbl))nxt(1)});swipe(tbl,nxt);$('.deck-nx',sc).addEventListener('click',function(){nxt(1)});lay2()}
+ /* 9. stories: a stack of sticky notes; drag the top note away (or tap) */
+ var tbl=$('#tbl');if(tbl&&!tbl._deck){tbl._deck=1;deck(tbl,$$('.note',tbl),'Next story','notes-deck')}
 
  /* 10. FAQ: an accordion; the answer opens right under its question */
  var ql=$('#qxList'),qp=$('#qxPanel');if(ql&&qp&&!ql._acc){ql._acc=1;var shut=true,typed=false;
