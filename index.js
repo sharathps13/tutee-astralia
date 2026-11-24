@@ -1366,7 +1366,10 @@ function deck(box,cards,label,cls){var n=cards.length,top=0,busy=false;box.class
  box.addEventListener('click',function(e){if(e.target.closest('a')||swiped(box))return;fly(cards[top],1)});drag(box,function(){return cards[top]},fly);$('.deck-nx',ui).addEventListener('click',function(){fly(cards[top],1)});lay()}
 function mk(tag,cls,html){var e=D.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
 var done={};
-function setup(){if(!PH.matches)return;
+/* phones: shorter intros that read in two lines instead of being cut off */
+var LEDE={top:'Course, offer, visa, flight and your first semester, handled by one team.',why:'World-ranked universities, work rights while you study, and years of post-study work.',services:'Nine services, one team, from your first question to your first pay cheque.',news:'Visa, work and university news as it lands. Tap a story to see what it means for you.',book:'Five quick questions. We turn them into a WhatsApp message and a counsellor calls you back.'};
+function ledes(){Object.keys(LEDE).forEach(function(id){var p=$('#'+id+' .lede');if(p&&!p._m){p._m=p.textContent;p.textContent=LEDE[id]}})}
+function setup(){if(!PH.matches)return;ledes();
 
  /* 1. hero: a full-screen story. Stories-style bars on top, tap right/left for the next/previous place,
     a live place chip, the place name rising letter by letter, glowing call to action, a ticker of numbers */
